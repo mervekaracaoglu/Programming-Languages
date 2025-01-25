@@ -1,0 +1,68 @@
+%{
+#include <stdio.h>
+int line_number = 1;
+int nested_comments = 0;
+%}
+
+%x single_comment
+%x multi_comment
+
+
+%%
+[ \t]+              {}
+\n                 { line_number++; }
+
+
+"//"               { BEGIN(single_comment); }
+<single_comment>.* {}
+<single_comment>\n  { line_number++; BEGIN(INITIAL); }
+
+"/*"               { 
+    nested_comments++; 
+    BEGIN(multi_comment); 
+}
+
+<multi_comment>"/*" { nested_comments++;}
+
+<multi_comment>\n    { line_number++; }
+
+
+<multi_comment>"*/" { 
+    nested_comments--;
+    if (nested_comments == 0) {
+        BEGIN(INITIAL); 
+    }
+}
+
+<multi_comment>[^*\n"/*"]+ {} 
+<multi_comment>\*+[^/] {}
+
+input   { printf("%d_tINPUT\n", line_number); }
+output  { printf("%d_tOUTPUT\n", line_number); }
+node    { printf("%d_tNODE\n", line_number); }
+evaluate { printf("%d_tEVALUATE\n", line_number); }
+and { printf("%d_tAND\n", line_number); }
+xor { printf("%d_tXOR\n", line_number); }
+or  { printf("%d_tOR\n", line_number); }
+not { printf("%d_tNOT\n", line_number); }
+true { printf("%d_tTRUE\n", line_number); }
+false { printf("%d_tFALSE\n", line_number); }
+\(   { printf("%d_tLPR\n", line_number); }
+\)   { printf("%d_tRPR\n", line_number); }
+=    { printf("%d_tASSIGN\n", line_number); }
+,    { printf("%d_tCOMMA\n", line_number); }
+
+[a-zA-Z][a-zA-Z0-9_]* { printf("%d_tIDENTIFIER_(%s)\n", line_number, yytext); }
+
+
+[^a-zA-Z0-9_(),= \t\n] { printf("%d_ILLEGAL_CHARACTER_(%s)\n", line_number, yytext); }
+
+"*/" { printf("%d_ILLEGAL_CHARACTER_(%s)\n", line_number, yytext); }
+
+%%
+
+int main() 
+{
+    yylex();
+    return 0;
+}
