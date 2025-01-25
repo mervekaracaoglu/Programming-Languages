@@ -1,0 +1,78 @@
+%{
+#include <stdio.h>
+#include "merve.karacaoglu-hw2.tab.h"
+%}
+
+%option yylineno
+%x COMMENT
+
+tINPUT          "input"
+tOUTPUT         "output"
+tNODE           "node"
+tEVALUATE       "evaluate"
+
+tAND            "and"
+tOR             "or"
+tXOR            "xor"
+tNOT            "not"
+tTRUE           "true"
+tFALSE          "false"
+tLPR            "("
+tRPR            ")"
+tASSIGNMENT     "="
+tCOMMA          ","
+
+tIDENTIFIER     [a-zA-Z][a-zA-Z0-9_]*
+
+tBLANK          [\t\n ]
+
+%{
+    int nestedComment = 0;
+%}
+
+%%
+
+{tINPUT}        {return tINPUT;}
+{tOUTPUT}       {return tOUTPUT; }
+{tNODE}         {return tNODE; }
+{tEVALUATE}     {return tEVALUATE; }
+
+{tAND}          {return tAND; }
+{tOR}           {return tOR; }
+{tNOT}          {return tNOT; }
+{tXOR}          {return tXOR; }
+{tTRUE}         {return tTRUE; }
+{tFALSE}        {return tFALSE; }
+{tLPR}          {return tLPR; }
+{tRPR}          {return tRPR; }
+{tASSIGNMENT}   {return tASSIGNMENT; }
+{tCOMMA}        {return tCOMMA; }
+
+{tIDENTIFIER}   {return tIDENTIFIER; }
+
+"/*" {
+    nestedComment++;
+    BEGIN (COMMENT);
+}
+
+<COMMENT>"/*" {
+    nestedComment++;
+}
+
+<COMMENT>"*/"       {
+    nestedComment--;
+    if (nestedComment == 0) {
+    BEGIN 0;
+    }
+}
+
+<COMMENT>.	{ }
+<COMMENT>\n	{ }
+
+[/]{2}.*        { }
+
+{tBLANK}        { }
+
+.               {return yytext[0]; }
+
+%%
